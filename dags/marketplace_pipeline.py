@@ -10,7 +10,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id="marketplace_pipeline",  
+    dag_id="marketplace_data_pipeline",  
     default_args=default_args,
     description="Pipeline de engenharia de dados para marketplace",
     schedule=None,
