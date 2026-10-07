@@ -1,0 +1,25 @@
+# Variáveis de ambiente
+.env
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs do Airflow
+logs/
+
+# Arquivos temporários e internos do Spark
+*.crc
+_SUCCESS
+._SUCCESS.crc
+
+# Data lake gerado pelo pipeline
+data/data_lake/bronze/
+data/data_lake/silver/
+data/data_lake/gold/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
