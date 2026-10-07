@@ -238,6 +238,12 @@ A etapa de ingestão utiliza:
 
 Isso evita que o pipeline continue quando a fonte retorna dados inválidos ou quando ocorre uma falha de comunicação.
 
+## Evidência da Execução
+
+Execução completa da DAG no Apache Airflow:
+
+![Execução do pipeline no Airflow](docs/images/dag-success.png)
+
 ## Aprendizados
 
 Durante o desenvolvimento deste projeto foram trabalhados conceitos importantes de Engenharia de Dados, como:
