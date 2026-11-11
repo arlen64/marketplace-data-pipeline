@@ -23,3 +23,14 @@ data/data_lake/gold/
 # Arquivos do sistema
 .DS_Store
 Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Outros
+.env
+__pycache__/
+*.pyc

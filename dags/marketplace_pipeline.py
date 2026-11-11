@@ -1,4 +1,11 @@
-from datetime import datetime
+"""
+Pipeline de engenharia de dados do Marketplace.
+Extrai dados da DummyJSON, processa em camadas (Bronze/Silver/Gold) no S3
+e carrega métricas agregadas no PostgreSQL.
+"""
+
+from datetime import datetime, timedelta
+
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 
@@ -7,15 +14,22 @@ default_args = {
     "depends_on_past": False,
     "start_date": datetime(2024, 1, 1),
     "retries": 1,
+    "retry_delay": timedelta(minutes=2),
+    
+    # Falhas serão enviadas automaticamente por email
+    "email": ["arlenoliveira65@gmail.com"],
+    "email_on_failure": True,
+    "email_on_retry": False,
+
 }
 
 with DAG(
-    dag_id="marketplace_data_pipeline",  
+    dag_id="marketplace_data_pipeline",
     default_args=default_args,
     description="Pipeline de engenharia de dados para marketplace",
     schedule=None,
     catchup=False,
-    tags=["data-engineering"],
+    tags=["marketplace", "data-engineering", "s3"],
 ) as dag:
 
     ingest_api = BashOperator(
@@ -38,4 +52,5 @@ with DAG(
         bash_command="python /opt/airflow/data/database/load_gold_to_postgres.py",
     )
 
+    # Fluxo linear: Ingestão → Silver → Gold → PostgreSQL
     ingest_api >> bronze_to_silver >> silver_to_gold >> load_gold_to_postgres
