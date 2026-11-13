@@ -15,7 +15,7 @@ default_args = {
     "start_date": datetime(2024, 1, 1),
     "retries": 1,
     "retry_delay": timedelta(minutes=2),
-    
+
     # Falhas serão enviadas automaticamente por email
     "email": ["arlenoliveira65@gmail.com"],
     "email_on_failure": True,

@@ -7,7 +7,6 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)s | %(message)s"
@@ -37,9 +36,9 @@ session.mount("https://", adapter)
 session.mount("http://", adapter)
 
 try:
-    
+
     logger.info("Iniciando ingestão de dados da DummyJSON API.")
-    
+
     response = session.get(API_URL, timeout=10)
     response.raise_for_status()
 
@@ -48,7 +47,7 @@ try:
     if not isinstance(response_data, dict):
         raise ValueError("Formato inesperado na resposta da API.")
 
-    data = response_data.get("products")    
+    data = response_data.get("products")
 
     if not isinstance(data, list):
         raise ValueError("A API não retornou uma lista válida de produtos.")
