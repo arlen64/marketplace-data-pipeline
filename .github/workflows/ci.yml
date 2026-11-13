@@ -20,7 +20,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 1.9.8 # Igualar versão do providers ao CI
+          terraform_version: 1.9.8
 
       - name: Terraform Format
         run: terraform fmt -check -recursive
@@ -50,3 +50,21 @@ jobs:
           python -m py_compile data/spark_jobs/silver_to_gold.py
           python -m py_compile data/database/load_gold_to_postgres.py
           python -m py_compile dags/marketplace_pipeline.py
+
+  lint:
+    name: Lint (Ruff)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      - name: Run Ruff
+        run: ruff check data/ dags/ --select E,F,W,I --ignore E501
