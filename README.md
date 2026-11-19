@@ -1,8 +1,8 @@
 # Marketplace Data Engineering Pipeline
 
-Projeto de Engenharia de Dados que constrói um pipeline completo de ingestão, transformação e carga de dados de produtos de um marketplace.
+Pipeline de engenharia de dados que extrai produtos da DummyJSON API, processa em camadas Bronze → Silver → Gold no Amazon S3 e carrega métricas agregadas no PostgreSQL. Orquestrado com Apache Airflow em ambiente local (Docker).
 
-Os dados são extraídos de uma API pública, processados em camadas Bronze, Silver e Gold no Amazon S3 e as métricas finais são carregadas no PostgreSQL. A orquestração é feita com Apache Airflow em ambiente local via Docker.
+O projeto foi evoluído com foco em práticas próximas de um ambiente de produção, mantendo custo baixo.
 
 ## Arquitetura
 
@@ -17,14 +17,16 @@ flowchart TD
     G --> H[load_gold_to_postgres.py]
     H --> I[(PostgreSQL<br/>gold_category_metrics)]
 
+    G --> J[simple_rag.py<br/>Protótipo RAG leve]
+
     subgraph Orquestração
-        J[Apache Airflow]
+        K[Apache Airflow]
     end
 
-    J -.-> B
-    J -.-> D
-    J -.-> F
-    J -.-> H
+    K -.-> B
+    K -.-> D
+    K -.-> F
+    K -.-> H
 ```
 
 ## Tecnologias
@@ -37,6 +39,7 @@ flowchart TD
 - Docker e Docker Compose
 - Terraform
 - Apache Parquet
+- scikit-learn (protótipo RAG)
 
 ## Camadas de Dados
 
@@ -46,63 +49,77 @@ flowchart TD
 | Silver | Parquet  | Dados limpos e selecionados      | `silver/products.parquet/`          |
 | Gold   | Parquet  | Métricas agregadas por categoria | `gold/category_metrics.parquet/`    |
 
-## Qualidade de Dados
+## Práticas Aplicadas
 
-O pipeline possui validações em cada etapa:
+- Usuário IAM de menor privilégio dedicado ao pipeline
+- Qualidade de dados em todas as camadas (falha cedo)
+- Idempotência via limpeza de pastas locais e prefixos no S3
+- Alertas de falha por e-mail
+- CI com validação de Terraform, lint (Ruff) e testes unitários
+- Protótipo de RAG leve sobre a camada Gold
 
-- Presença de campos obrigatórios
-- IDs únicos
-- Preços maiores que zero
-- Ausência de valores nulos em colunas críticas
-- Verificação de volume mínimo de registros
+## Protótipo RAG Leve
 
-Os scripts também limpam as pastas locais e os prefixos correspondentes no S3 antes de gravar novas versões, evitando acúmulo de arquivos e garantindo idempotência.
+Arquivo: `data/rag/simple_rag.py`
+
+Utiliza TF-IDF e similaridade de cosseno para responder perguntas simples sobre as categorias da camada Gold.
+
+**Limitações:**
+- Melhor desempenho com palavras-chave diretas
+- Similaridade tende a ser baixa em textos curtos
+- Não substitui um sistema de RAG com embeddings densos
+- Serve como prova de conceito educacional
+
+**Exemplo de uso:**
+```bash
+docker compose exec airflow-worker python /opt/airflow/data/rag/simple_rag.py produtos baratos
+```
 
 ## Como Executar
 
 1. Clone o repositório e acesse a pasta do projeto.
-2. Crie um arquivo `.env` a partir do `.env.example` e configure as credenciais da AWS e do banco.
-3. Suba os containers:
+2. Crie um arquivo `.env` baseado no `.env.example`.
+3. Suba os serviços:
    ```bash
    docker compose up -d
    ```
-4. Acesse a interface do Airflow em `http://localhost:8080`.
-5. Localize e execute a DAG `marketplace_data_pipeline`.
+4. Acesse o Airflow em `http://localhost:8080`.
+5. Execute a DAG `marketplace_data_pipeline`.
 
 ## Estrutura do Projeto
 
 ```text
 airflow-docker/
-├── dags/
-│   └── marketplace_pipeline.py
+├── dags/marketplace_pipeline.py
 ├── data/
-│   ├── ingestion/
-│   │   └── ingest_api.py
+│   ├── ingestion/ingest_api.py
 │   ├── spark_jobs/
 │   │   ├── bronze_to_silver.py
 │   │   └── silver_to_gold.py
-│   └── database/
-│       └── load_gold_to_postgres.py
+│   ├── database/load_gold_to_postgres.py
+│   └── rag/simple_rag.py
+├── tests/test_quality.py
 ├── terraform/
+├── .github/workflows/ci.yml
 ├── docker-compose.yaml
-├── .env.example
 └── README.md
 ```
 
-## Resultado Validado
+## Resultados Validados
 
 - 194 produtos ingeridos da API
 - 194 registros processados na camada Silver
 - 24 categorias geradas na camada Gold
-- 24 linhas carregadas na tabela `gold_category_metrics`
-- DAG executada com sucesso no Airflow
+- 24 linhas carregadas no PostgreSQL
+- DAG executada com sucesso
+- CI passando
 
 ## Próximos Passos
 
-- Implementar CI básico com GitHub Actions
-- Adicionar alertas em caso de falha da DAG
-- Evoluir o projeto com RAG e experimentos de fine-tuning (LoRA/QLoRA)
+- Melhorias de observabilidade
+- Rotação de credenciais
+- Evolução opcional do RAG ou experimentos de fine-tuning
 
 ## Autor
 
-Projeto desenvolvido como parte dos estudos e construção de portfólio em Engenharia de Dados.
+Projeto desenvolvido como estudo e portfólio em Engenharia de Dados, com ênfase em práticas próximas de produção e baixo custo.
